@@ -1,0 +1,7 @@
+{
+    "require": {
+        "symfony/css-selector": "^5.0",
+        "symfony/dom-crawler": "^5.0",
+        "symfony/var-dumper": "^5.0"
+    }
+}
