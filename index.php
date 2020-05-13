@@ -44,9 +44,11 @@ function curlConnect($url = DEFAULT_URL){
 
 function findContent(Crawler $crawler){
     try {
-        $crawler = $crawler->filter('.wrapper > main')->each(function (Crawler $node){
-            $h1 = $node->filter('h1')->text();
-            $p = $node->filter('h1')->siblings()->text();
+        $crawler = $crawler->filter('.wrapper > main .page-article')->each(function (Crawler $node){
+            $h1 = $node->siblings()->filter('h1')->text();
+//            echo $h1.PHP_EOL;
+            $p = $node->siblings()->filter('h1')->siblings()->text();
+//            echo PHP_EOL.$p;
             $result['title'] = $h1 ." ". $p;
             $result['content'] = str_replace($h1,"", str_replace($p, "", $node->html()));
             return $result;
@@ -86,7 +88,8 @@ function putContent($content){
                         $xml->writeElement("turbo:topic", $item[0]['title']);
                         $xml->writeElement("turbo:source", $item[0]['link']);
                         $xml->startElement("turbo:content");
-                            $xml->writeCdata(str_replace("/* <![CDATA[ */", "", str_replace("/* ]]> */", "", $item[0]['content'])));
+                            $xml->writeCdata($item[0]['content']);
+                        // $xml->writeCdata(str_replace("data-lazy-src", "src",str_replace("/* <![CDATA[ */", "", str_replace("/* ]]> */", "", $item[0]['content']))));
                         $xml->endElement();
                     $xml->endElement();
                     echo progressBar($i, count($content), 'Запись файла', 90);
@@ -109,12 +112,39 @@ function putContent($content){
 //var_dump($page);
 $page = curlConnect();
 $crawler = new Crawler($page, null, DEFAULT_URL);
-$crawler = $crawler->filter('.top-menu .menu-item-has-children .sub-menu li')->each(function (Crawler $node, $i) {
+$crawler = $crawler->filter('.top-menu .menu-item-has-children .sub-menu li')->each(function (Crawler $node) {
     $result["text"] = $node->text();
     $result["link"] = $node->filter('a')->link()->getUri();
     return $result;
 });
-
+$pattern = [
+    "/\s?<div class=\"portfolio.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"review-screen.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"material.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"review-slider.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"review-item.*?\"[^>]*?>.*?<\/div>\s?/si",
+/*    "/\s?<div class=\"c-pop.*?\"[^>]*?>.*?<\/div>\s?/si",*/
+/*/*    "/\s?<div class=\"big-slider-block.*?\"[^>]*?>.*?<\/div>\s?/si",*/
+    "'<div class=\"big-slider-block\"[^>]*?>.*?</div>'si",
+/*    "/\s?<h1[^>]*?>.*?<\/h1>\s?/si",*/
+    '/\s?data:image.*?["][^"]*"\s?/i',
+    '/\s?id=["][^"]*"\s?/i',
+////    '/\s?href=["][^"][^#]*"\s?/i',
+    '/\s?<script[^>]*?>.*?<\/script>\s?/si',
+    '/\s?<form[^>]*?>.*?<\/form>\s?/si',
+    '/\s?<noscript[^>]*?>.*?<\/noscript>\s?/si',
+    '/\s?<footer[^>]*?>.*?<\/footer>\s?/si'
+];
+$replacement = [
+    "src",
+    "src",
+    DEFAULT_URL."wp-content"
+];
+$search = [
+    "data-lazy-src",
+    "srcset",
+    " /wp-content"
+];
 foreach ($crawler as $key => $node){
     try {
 //        echo  $key. ") ".$node['link']." ". $node['text'] . PHP_EOL;
@@ -122,15 +152,15 @@ foreach ($crawler as $key => $node){
         $crawler = new Crawler($html, null, DEFAULT_URL);
         $content[] = findContent($crawler);
         $content[$key][0]['link'] = $node['link'];
-//        var_dump($content);
+        //delete
+        $content[$key][0]['content'] = str_replace( $search, $replacement, preg_replace($pattern, " ", $content[$key][0]['content']));
+/*        preg_replace('/\s?<div[^>]*?>.*?<\/div>\s?/si', ' ', $text);*/
     } catch (\Exception $e) {
         echo $e->getMessage();
     }
 }
 
 if(putContent($content))
-    echo PHP_EOL. "Success write!" .PHP_EOL ;
+    echo PHP_EOL . "Success write!" . PHP_EOL ;
 else
     echo "Error!" . PHP_EOL;
-
-
