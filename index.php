@@ -44,10 +44,10 @@ function curlConnect($url = DEFAULT_URL){
 
 function findContent(Crawler $crawler){
     try {
-        $crawler = $crawler->filter('.wrapper > main .page-article')->each(function (Crawler $node){
-            $h1 = $node->siblings()->filter('h1')->text();
+        $crawler = $crawler->filter('.wrapper > main')->each(function (Crawler $node){
+            $h1 = $node->filter('h1')->text();
 //            echo $h1.PHP_EOL;
-            $p = $node->siblings()->filter('h1')->siblings()->text();
+            $p = $node->filter('h1')->siblings()->text();
 //            echo PHP_EOL.$p;
             $result['title'] = $h1 ." ". $p;
             $result['content'] = str_replace($h1,"", str_replace($p, "", $node->html()));
@@ -92,7 +92,7 @@ function putContent($content){
                         // $xml->writeCdata(str_replace("data-lazy-src", "src",str_replace("/* <![CDATA[ */", "", str_replace("/* ]]> */", "", $item[0]['content']))));
                         $xml->endElement();
                     $xml->endElement();
-                    echo progressBar($i, count($content), 'Запись файла', 90);
+                    echo progressBar($i+1, count($content), 'Запись файла', 90);
                     sleep(1);
                 endforeach;
             $xml->endElement();
@@ -123,25 +123,33 @@ $pattern = [
     "/\s?<div class=\"material.*?\"[^>]*?>.*?<\/div>\s?/si",
     "/\s?<div class=\"review-slider.*?\"[^>]*?>.*?<\/div>\s?/si",
     "/\s?<div class=\"review-item.*?\"[^>]*?>.*?<\/div>\s?/si",
-/*    "/\s?<div class=\"c-pop.*?\"[^>]*?>.*?<\/div>\s?/si",*/
-/*/*    "/\s?<div class=\"big-slider-block.*?\"[^>]*?>.*?<\/div>\s?/si",*/
+    "/\s?<div class=\"form-list\".*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<p style=\"margin-bottom: 3px !important;\".*?\"[^>]*?>.*?<\/p>\s?/si",
+    "/\s?<div class=\"c-pop.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"pop-catalog.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"privacy.*?\"[^>]*?>.*?<\/div>\s?/si",
+    "/\s?<div class=\"page-screen.*?\"[^>]*?>.*?<\/div>\s?/si",
+/*    "/\s?<div class=\"big-slider-block.*?\"[^>]*?>.*?<\/div>\s?/si",*/
     "'<div class=\"big-slider-block\"[^>]*?>.*?</div>'si",
+    "'<a href=\"#.*?\"[^>]*?>.*?</a>'si",
 /*    "/\s?<h1[^>]*?>.*?<\/h1>\s?/si",*/
     '/\s?data:image.*?["][^"]*"\s?/i',
     '/\s?id=["][^"]*"\s?/i',
+    '/\s?data-lazy-src=["][^"]*"\s?/i',
 ////    '/\s?href=["][^"][^#]*"\s?/i',
     '/\s?<script[^>]*?>.*?<\/script>\s?/si',
     '/\s?<form[^>]*?>.*?<\/form>\s?/si',
     '/\s?<noscript[^>]*?>.*?<\/noscript>\s?/si',
-    '/\s?<footer[^>]*?>.*?<\/footer>\s?/si'
+    '/\s?<footer[^>]*?>.*?<\/footer>\s?/si',
+//    "![#](.*?)'!"
 ];
 $replacement = [
-    "src",
+//    "src",
     "src",
     DEFAULT_URL."wp-content"
 ];
 $search = [
-    "data-lazy-src",
+//    "data-lazy-src",
     "srcset",
     " /wp-content"
 ];
